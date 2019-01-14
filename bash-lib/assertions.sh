@@ -32,6 +32,18 @@ function assertFileRegex() {
     fi
 }
 
+# Asserts that the content of a file does not match a given regular
+# expression.
+#
+# Example:
+#     assertFileNotRegex foo/bar.txt "^this line is missing$"
+#
+function assertFileNotRegex() {
+    if grep -q "$2" "$TESTED/$1"; then
+        fail "Expected $1 to not match $2 but it did."
+    fi
+}
+
 # Asserts that the content of a file matches another file.
 #
 # Example:
