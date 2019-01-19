@@ -20,6 +20,18 @@ function assertFileExists() {
     fi
 }
 
+function assertFileIsExecutable() {
+    if [[ ! -x "$TESTED/$1" ]]; then
+        fail "Expected $1 to be executable but it was not."
+    fi
+}
+
+function assertFileIsNotExecutable() {
+    if [[ -x "$TESTED/$1" ]]; then
+        fail "Expected $1 to not be executable but it was."
+    fi
+}
+
 # Asserts that the content of a file matches a given regular
 # expression.
 #
