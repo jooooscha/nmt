@@ -20,6 +20,17 @@ function assertFileExists() {
     fi
 }
 
+# Asserts the non-existence of a file.
+#
+# Example:
+#     assertFileNotExists foo/bar.txt
+#
+function assertFileNotExists() {
+    if [[ -f "$TESTED/$1" ]]; then
+        fail "Expected $1 to be missing but it exists."
+    fi
+}
+
 function assertFileIsExecutable() {
     if [[ ! -x "$TESTED/$1" ]]; then
         fail "Expected $1 to be executable but it was not."
