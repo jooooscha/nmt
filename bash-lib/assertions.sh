@@ -77,3 +77,44 @@ function assertFileContent() {
 $(diff -du --label actual --label expected "$TESTED/$1" "$2")"
     fi
 }
+
+# Asserts the existence of a directory.
+#
+# Example:
+#     assertDirectoryExists foo/bar
+#
+function assertDirectoryExists() {
+    if [[ ! -d "$TESTED/$1" ]]; then
+        fail "Expected directory $1 to exist but it was not found."
+    fi
+}
+
+# Asserts that a directory exists but is empty.
+#
+# Example:
+#     assertDirectoryEmpty foo/bar
+#
+function assertDirectoryEmpty() {
+    assertDirectoryExists "$1"
+
+    local content
+    content="$(find "$TESTED/$1" -mindepth 1 -maxdepth 1 -printf '%P\n')"
+
+    if [[ $content ]]; then
+        fail "Expected directory $1 to be empty but it contains
+$content"
+    fi
+}
+
+# Asserts that a directory exists and is not empty.
+#
+# Example:
+#     assertDirectoryNotEmpty foo/bar
+#
+function assertDirectoryNotEmpty() {
+    assertDirectoryExists "$1"
+
+    if [[ ! $(find "$TESTED/$1" -mindepth 1 -maxdepth 1) ]]; then
+        fail "Expected directory $1 to be not empty but it was."
+    fi
+}
