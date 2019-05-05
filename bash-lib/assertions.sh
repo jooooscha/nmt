@@ -9,6 +9,17 @@ function fail() {
     exit 1
 }
 
+# Asserts the non-existence of a file system path.
+#
+# Example:
+#     assertPathNotExists foo/bar.txt
+#
+function assertPathNotExists() {
+    if [[ -e "$TESTED/$1" ]]; then
+        fail "Expected $1 to be missing but it exists."
+    fi
+}
+
 # Asserts the existence of a file.
 #
 # Example:
@@ -17,17 +28,6 @@ function fail() {
 function assertFileExists() {
     if [[ ! -f "$TESTED/$1" ]]; then
         fail "Expected $1 to exist but it was not found."
-    fi
-}
-
-# Asserts the non-existence of a file.
-#
-# Example:
-#     assertFileNotExists foo/bar.txt
-#
-function assertFileNotExists() {
-    if [[ -f "$TESTED/$1" ]]; then
-        fail "Expected $1 to be missing but it exists."
     fi
 }
 
