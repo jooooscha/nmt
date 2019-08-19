@@ -24,44 +24,48 @@ let
     . "${./bash-lib/assertions.sh}"
   '';
 
-  runTest = name: test:
+  runShellOnlyCommand = name: shellHook:
     pkgs.runCommand
-      "nmt-run-test-${test.config.nmt.name}"
+      name
       {
-        preferLocalBuild = true;
+        inherit shellHook;
         allowSubstitutes = false;
-        shellHook = ''
-          ${runScriptHeader}
-
-          ${test.config.nmt.wrappedScript}
-
-          exit 0
-        '';
+        preferLocalBuild = true;
       }
-      "";
+      ''
+        echo This derivation is only useful when run through nix-shell.
+        exit 1
+      '';
+
+  runTest = name: test:
+    runShellOnlyCommand
+      "nmt-run-test-${test.config.nmt.name}"
+      ''
+        ${runScriptHeader}
+
+        ${test.config.nmt.wrappedScript}
+
+        exit 0
+      '';
 
   runAllTests =
-    pkgs.runCommand
+    runShellOnlyCommand
       "nmt-run-all-tests"
-      {
-        preferLocalBuild = true;
-        allowSubstitutes = false;
-        shellHook =
-          let
-            scripts =
-              concatStringsSep "\n\n"
-              (mapAttrsToList (n: test: test.config.nmt.wrappedScript)
-              (evaluatedTests));
-          in
-            ''
-              ${runScriptHeader}
+      (
+        let
+          scripts =
+            concatStringsSep "\n\n"
+            (mapAttrsToList (n: test: test.config.nmt.wrappedScript)
+            (evaluatedTests));
+        in
+          ''
+            ${runScriptHeader}
 
-              ${scripts}
+            ${scripts}
 
-              exit 0
-            '';
-      }
-      "";
+            exit 0
+          ''
+      );
 
 in
 
@@ -71,25 +75,21 @@ rec {
     // { all = runAllTests; };
 
   list =
-    pkgs.runCommand
+    runShellOnlyCommand
       "nmt-list-tests"
-      {
-        preferLocalBuild = true;
-        allowSubstitutes = false;
-        shellHook =
-          let
-            scripts =
-              concatStringsSep "\n"
-              (map (n: "echo ${n}") (attrNames tests));
-          in
-            ''
-              ${runScriptHeader}
+      (
+        let
+          scripts =
+            concatStringsSep "\n"
+            (map (n: "echo ${n}") (attrNames tests));
+        in
+          ''
+            ${runScriptHeader}
 
-              echo all
-              ${scripts}
+            echo all
+            ${scripts}
 
-              exit 0
-            '';
-      }
-      "";
+            exit 0
+          ''
+      );
 }
