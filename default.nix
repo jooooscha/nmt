@@ -1,6 +1,6 @@
-{ modules, testedAttrPath, tests, pkgs }:
+{ modules, testedAttrPath, tests, pkgs, lib ? pkgs.lib }:
 
-with pkgs.lib;
+with lib;
 
 let
 
