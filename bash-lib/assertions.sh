@@ -6,6 +6,7 @@
 #     fail "It should have been but it wasn't to be"
 function fail() {
     echo "$1"
+    echo "For further reference please introspect $TESTED."
     exit 1
 }
 
