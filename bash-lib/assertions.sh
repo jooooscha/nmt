@@ -85,6 +85,34 @@ $(diff -du --label actual --label expected "$TESTED/$1" "$2")"
     fi
 }
 
+# Asserts the existence of a symlink.
+#
+# Example:
+#     assertLinkExists foo/bar
+#
+function assertLinkExists() {
+    if [[ ! -L "$TESTED/$1" ]]; then
+        fail "Expected symlink $1 to exist but it was not found."
+    fi
+}
+
+# Asserts whether a symlink points to the appropriate file.
+#
+# Example:
+#     assertLinkPointsTo foo/bar /etc/foo
+#
+function assertLinkPointsTo() {
+    assertLinkExists "$1"
+
+    target="$(readlink "$TESTED/$1")"
+
+    # A symlink may point to a non-existing file so there is no need
+    # to check if the path exists.
+    if [[ "$target" != "$2" ]]; then
+        fail "Symlink $1 was supposed to point to $2, but it actually points to $target."
+    fi
+}
+
 # Asserts the existence of a directory.
 #
 # Example:
