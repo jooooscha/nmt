@@ -44,6 +44,12 @@ function assertFileIsNotExecutable() {
     fi
 }
 
+function sourceFile() {
+    assertFileExists "$1"
+    # shellcheck disable=SC1090
+    source "$TESTED/$1"
+}
+
 # Asserts that the content of a file matches a given regular
 # expression.
 #
