@@ -17,9 +17,16 @@ let
 
   evaluatedTests = mapAttrs evalTest tests;
 
+  scriptPath = makeBinPath (with pkgs; [
+    # For tput.
+    ncurses
+  ]);
+
   runScript = name: script:
     runShellOnlyCommand name ''
       set -uo pipefail
+
+      export PATH="${scriptPath}''${PATH:+:}$PATH"
 
       . "${./bash-lib/color-echo.sh}"
       . "${./bash-lib/assertions.sh}"
