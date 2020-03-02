@@ -17,12 +17,17 @@ let
 
   evaluatedTests = mapAttrs evalTest tests;
 
-  runScriptHeader = ''
-    set -uo pipefail
+  runScript = name: script:
+    runShellOnlyCommand name ''
+      set -uo pipefail
 
-    . "${./bash-lib/color-echo.sh}"
-    . "${./bash-lib/assertions.sh}"
-  '';
+      . "${./bash-lib/color-echo.sh}"
+      . "${./bash-lib/assertions.sh}"
+
+      ${script}
+
+      exit 0
+    '';
 
   runShellOnlyCommand = name: shellHook:
     pkgs.runCommand
@@ -38,34 +43,16 @@ let
       '';
 
   runTest = name: test:
-    runShellOnlyCommand
+    runScript
       "nmt-run-test-${test.config.nmt.name}"
-      ''
-        ${runScriptHeader}
-
-        ${test.config.nmt.wrappedScript}
-
-        exit 0
-      '';
+      test.config.nmt.wrappedScript;
 
   runAllTests =
-    runShellOnlyCommand
-      "nmt-run-all-tests"
-      (
-        let
-          scripts =
-            concatStringsSep "\n\n"
-            (mapAttrsToList (n: test: test.config.nmt.wrappedScript)
-            (evaluatedTests));
-        in
-          ''
-            ${runScriptHeader}
-
-            ${scripts}
-
-            exit 0
-          ''
-      );
+    runScript "nmt-run-all-tests" (
+      concatStringsSep "\n\n"
+      (mapAttrsToList (n: test: test.config.nmt.wrappedScript)
+      (evaluatedTests))
+    );
 
 in
 
@@ -75,7 +62,7 @@ rec {
     // { all = runAllTests; };
 
   list =
-    runShellOnlyCommand
+    runScript
       "nmt-list-tests"
       (
         let
@@ -84,12 +71,8 @@ rec {
             (map (n: "echo ${n}") (attrNames tests));
         in
           ''
-            ${runScriptHeader}
-
             echo all
             ${scripts}
-
-            exit 0
           ''
       );
 }
