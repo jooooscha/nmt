@@ -6,9 +6,7 @@ let
 
   cfg = config.nmt;
 
-in
-
-{
+in {
   options.nmt = {
     name = mkOption {
       type = types.str;

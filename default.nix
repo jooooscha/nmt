@@ -4,23 +4,23 @@ with lib;
 
 let
 
-  evalTest = name: test: evalModules {
-    modules =
-      let
+  evalTest = name: test:
+    evalModules {
+      modules = let
         initModule = { config, ... }: {
           nmt.name = name;
           nmt.tested = getAttrFromPath testedAttrPath config;
         };
-      in
-        [ initModule ./nmt.nix test ] ++ modules;
-  };
+      in [ initModule ./nmt.nix test ] ++ modules;
+    };
 
   evaluatedTests = mapAttrs evalTest tests;
 
-  scriptPath = makeBinPath (with pkgs; [
-    # For tput.
-    ncurses
-  ]);
+  scriptPath = makeBinPath (with pkgs;
+    [
+      # For tput.
+      ncurses
+    ]);
 
   runScript = name: script:
     runShellOnlyCommand name ''
@@ -37,49 +37,29 @@ let
     '';
 
   runShellOnlyCommand = name: shellHook:
-    pkgs.runCommand
-      name
-      {
-        inherit shellHook;
-        allowSubstitutes = false;
-        preferLocalBuild = true;
-      }
-      ''
-        echo This derivation is only useful when run through nix-shell.
-        exit 1
-      '';
+    pkgs.runCommand name {
+      inherit shellHook;
+      allowSubstitutes = false;
+      preferLocalBuild = true;
+    } ''
+      echo This derivation is only useful when run through nix-shell.
+      exit 1
+    '';
 
   runTest = name: test:
-    runScript
-      "nmt-run-test-${test.config.nmt.name}"
-      test.config.nmt.wrappedScript;
+    runScript "nmt-run-test-${test.config.nmt.name}"
+    test.config.nmt.wrappedScript;
 
-  runAllTests =
-    runScript "nmt-run-all-tests" (
-      concatStringsSep "\n\n"
-      (mapAttrsToList (n: test: test.config.nmt.wrappedScript)
-      (evaluatedTests))
-    );
+  runAllTests = runScript "nmt-run-all-tests" (concatStringsSep "\n\n"
+    (mapAttrsToList (n: test: test.config.nmt.wrappedScript) (evaluatedTests)));
 
-in
+in rec {
+  run = mapAttrs runTest evaluatedTests // { all = runAllTests; };
 
-rec {
-  run =
-    mapAttrs runTest evaluatedTests
-    // { all = runAllTests; };
-
-  list =
-    runScript
-      "nmt-list-tests"
-      (
-        let
-          scripts =
-            concatStringsSep "\n"
-            (map (n: "echo ${n}") (attrNames tests));
-        in
-          ''
-            echo all
-            ${scripts}
-          ''
-      );
+  list = runScript "nmt-list-tests" (let
+    scripts = concatStringsSep "\n" (map (n: "echo ${n}") (attrNames tests));
+  in ''
+    echo all
+    ${scripts}
+  '');
 }
