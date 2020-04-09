@@ -37,30 +37,57 @@ in {
       '';
     };
 
-    wrappedScript = mkOption {
-      type = types.str;
-      internal = true;
-      readOnly = true;
-      description = ''
-        The package containing the wrapped test script.
-      '';
+    result = {
+      success = mkOption {
+        type = types.bool;
+        internal = true;
+        readOnly = true;
+        description = ''
+          Whether the test succeeded.
+        '';
+      };
+
+      report = mkOption {
+        type = types.package;
+        internal = true;
+        readOnly = true;
+        description = ''
+          The test results.
+        '';
+      };
     };
   };
 
   config = {
-    nmt.wrappedScript = ''
-      output=$(
-      TESTED="${cfg.tested}"
-      ${cfg.script}
-      )
+    nmt.result = {
+      success = ''
+        OK
+      '' == builtins.readFile "${cfg.result.report}/result";
 
-      if [[ $? != 0 ]]; then
-         errorEcho "${cfg.name}: FAILED"
-         echo "$output"
-         exit 1
-      else
-         noteEcho "${cfg.name}: OK"
-      fi
-    '';
+      report = let
+        scriptPath =
+          makeBinPath (with pkgs; [ coreutils diffutils findutils gnugrep ]);
+
+        testScript = pkgs.writeShellScript "nmt-test-script-${cfg.name}" ''
+          set -uo pipefail
+
+          export PATH="${scriptPath}"
+
+          . "${./bash-lib/assertions.sh}"
+
+          TESTED="${cfg.tested}"
+          ${cfg.script}
+        '';
+      in pkgs.runCommandLocal "nmt-report-${cfg.name}" { } ''
+        mkdir -p $out
+        ln -s ${cfg.tested} $out/tested
+        ln -s ${testScript} $out/script
+        if ${testScript} 2>&1 > $out/output; then
+          echo OK > $out/result
+        else
+          echo FAILED > $out/result
+        fi
+      '';
+    };
   };
 }

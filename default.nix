@@ -16,20 +16,18 @@ let
 
   evaluatedTests = mapAttrs evalTest tests;
 
-  scriptPath = makeBinPath (with pkgs;
-    [
-      # For tput.
-      ncurses
-    ]);
+  scriptPath = makeBinPath (with pkgs; [
+    coreutils
+    ncurses # For tput.
+  ]);
 
   runScript = name: script:
     runShellOnlyCommand name ''
       set -uo pipefail
 
-      export PATH="${scriptPath}''${PATH:+:}$PATH"
+      export PATH="${scriptPath}"
 
       . "${./bash-lib/color-echo.sh}"
-      . "${./bash-lib/assertions.sh}"
 
       ${script}
 
@@ -37,24 +35,47 @@ let
     '';
 
   runShellOnlyCommand = name: shellHook:
-    pkgs.runCommand name {
-      inherit shellHook;
-      allowSubstitutes = false;
-      preferLocalBuild = true;
-    } ''
+    pkgs.runCommandLocal name { inherit shellHook; } ''
       echo This derivation is only useful when run through nix-shell.
       exit 1
     '';
 
+  reportResult = { name, result, onSuccess, onError }:
+    if result.success then ''
+      noteEcho "${name}: OK"
+      ${onSuccess}
+    '' else ''
+      errorEcho "${name}: FAILED"
+      cat "${result.report}/output"
+      echo "For further reference please introspect ${result.report}"
+      ${onError}
+    '';
+
   runTest = name: test:
-    runScript "nmt-run-test-${test.config.nmt.name}"
-    test.config.nmt.wrappedScript;
+    runScript "nmt-run-${name}" (reportResult {
+      inherit (test.config.nmt) name result;
+      onSuccess = "exit 0";
+      onError = "exit 1";
+    });
 
   runAllTests = runScript "nmt-run-all-tests" (concatStringsSep "\n\n"
-    (mapAttrsToList (n: test: test.config.nmt.wrappedScript) (evaluatedTests)));
+    (mapAttrsToList (n: test:
+      reportResult {
+        inherit (test.config.nmt) name result;
+        onSuccess = "";
+        onError = "ERR=1";
+      }) (evaluatedTests)) + ''
+        if [[ -v ERR ]]; then
+          exit 1
+        else
+          exit 0
+        fi
+      '');
 
 in rec {
   run = mapAttrs runTest evaluatedTests // { all = runAllTests; };
+
+  report = mapAttrs (name: test: test.config.nmt.result.report) evaluatedTests;
 
   list = runScript "nmt-list-tests" (let
     scripts = concatStringsSep "\n" (map (n: "echo ${n}") (attrNames tests));
