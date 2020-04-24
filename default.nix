@@ -64,7 +64,7 @@ let
         inherit (test.config.nmt) name result;
         onSuccess = "";
         onError = "ERR=1";
-      }) (evaluatedTests)) + ''
+      }) evaluatedTests) + ''
         if [[ -v ERR ]]; then
           exit 1
         else
