@@ -49,6 +49,17 @@ function sourceFile() {
     source "$TESTED/$1"
 }
 
+# Asserts that the given file contains the given line of text.
+#
+# Example:
+#     assertFileContains foo/bar.txt "this line exists"
+#
+function assertFileContains() {
+    if ! grep -qF "$2" "$TESTED/$1"; then
+        fail "Expected $1 to contain $2 but it did not."
+    fi
+}
+
 # Asserts that the content of a file matches a given regular
 # expression.
 #
