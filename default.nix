@@ -60,11 +60,12 @@ let
 
   runAllTests = runScript "nmt-run-all-tests" (concatStringsSep "\n\n"
     (mapAttrsToList (n: test:
-      reportResult {
-        inherit (test.config.nmt) name result;
+      let evaluated = evalTest n test;
+      in reportResult {
+        inherit (evaluated.config.nmt) name result;
         onSuccess = "";
         onError = "ERR=1";
-      }) evaluatedTests) + ''
+      }) tests) + ''
         if [[ -v ERR ]]; then
           exit 1
         else
