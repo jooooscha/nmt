@@ -22,7 +22,7 @@ in {
     };
 
     script = mkOption {
-      type = types.str;
+      type = types.lines;
       example = ''
         assertFileExists home-files/.Xresources
       '';
