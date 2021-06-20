@@ -51,6 +51,13 @@ let
       ${onError}
     '';
 
+  buildTest = name: test: test.config.nmt.result.build;
+
+  buildAllTests = pkgs.linkFarm "nmt-all-tests" (mapAttrsToList (n: v: {
+    name = n;
+    path = buildTest n v;
+  }) evaluatedTests);
+
   runTest = name: test:
     runScript "nmt-run-${name}" (reportResult {
       inherit (test.config.nmt) name result;
@@ -74,6 +81,8 @@ let
       '');
 
 in rec {
+  build = mapAttrs buildTest evaluatedTests // { all = buildAllTests; };
+
   run = mapAttrs runTest evaluatedTests // { all = runAllTests; };
 
   report = mapAttrs (name: test: test.config.nmt.result.report) evaluatedTests;
