@@ -1,5 +1,16 @@
 #!/usr/bin/env bash
 
+# Internal helper to produce an absolute file path. Specifically, the given
+# argument is returned as-is if it is an absolute path (starts with '/').
+# Otherwise it is returned with a "$TESTED/" prefix.
+#
+# Example:
+#    _abs "foo/bar"  ⇒ "$TESTED/foo/bar"
+#    _abs "/foo/bar" ⇒ "/foo/bar"
+function _abs() {
+    [[ $1 == /* ]] && echo "$1" || echo "$TESTED/$1"
+}
+
 # Always failing assertion with a message.
 #
 # Example:
@@ -15,7 +26,7 @@ function fail() {
 #     assertPathNotExists foo/bar.txt
 #
 function assertPathNotExists() {
-    if [[ -e "$TESTED/$1" ]]; then
+    if [[ -e $(_abs "$1") ]]; then
         fail "Expected $1 to be missing but it exists."
     fi
 }
@@ -26,19 +37,19 @@ function assertPathNotExists() {
 #     assertFileExists foo/bar.txt
 #
 function assertFileExists() {
-    if [[ ! -f "$TESTED/$1" ]]; then
+    if [[ ! -f $(_abs "$1") ]]; then
         fail "Expected $1 to exist but it was not found."
     fi
 }
 
 function assertFileIsExecutable() {
-    if [[ ! -x "$TESTED/$1" ]]; then
+    if [[ ! -x $(_abs "$1") ]]; then
         fail "Expected $1 to be executable but it was not."
     fi
 }
 
 function assertFileIsNotExecutable() {
-    if [[ -x "$TESTED/$1" ]]; then
+    if [[ -x $(_abs "$1") ]]; then
         fail "Expected $1 to not be executable but it was."
     fi
 }
@@ -46,7 +57,7 @@ function assertFileIsNotExecutable() {
 function sourceFile() {
     assertFileExists "$1"
     # shellcheck disable=SC1090
-    source "$TESTED/$1"
+    source "$(_abs "$1")"
 }
 
 # Asserts that the given file contains the given line of text.
@@ -55,7 +66,7 @@ function sourceFile() {
 #     assertFileContains foo/bar.txt "this line exists"
 #
 function assertFileContains() {
-    if ! grep -qF "$2" "$TESTED/$1"; then
+    if ! grep -qF "$2" "$(_abs "$1")"; then
         fail "Expected $1 to contain $2 but it did not."
     fi
 }
@@ -67,7 +78,7 @@ function assertFileContains() {
 #     assertFileRegex foo/bar.txt "^this line exists$"
 #
 function assertFileRegex() {
-    if ! grep -q "$2" "$TESTED/$1"; then
+    if ! grep -q "$2" "$(_abs "$1")"; then
         fail "Expected $1 to match $2 but it did not."
     fi
 }
@@ -79,7 +90,7 @@ function assertFileRegex() {
 #     assertFileNotRegex foo/bar.txt "^this line is missing$"
 #
 function assertFileNotRegex() {
-    if grep -q "$2" "$TESTED/$1"; then
+    if grep -q "$2" "$(_abs "$1")"; then
         fail "Expected $1 to not match $2 but it did."
     fi
 }
@@ -89,9 +100,9 @@ function assertFileNotRegex() {
 # Example:
 #     assertFileCompare foo/bar.txt bar-expected.txt
 function assertFileContent() {
-    if ! cmp -s "$TESTED/$1" "$2"; then
+    if ! cmp -s "$(_abs "$1")" "$2"; then
         fail "Expected $1 to be same as $2 but were different:
-$(diff -du --label actual --label expected "$TESTED/$1" "$2")"
+$(diff -du --label actual --label expected "$(_abs "$1")" "$2")"
     fi
 }
 
@@ -101,7 +112,7 @@ $(diff -du --label actual --label expected "$TESTED/$1" "$2")"
 #     assertLinkExists foo/bar
 #
 function assertLinkExists() {
-    if [[ ! -L "$TESTED/$1" ]]; then
+    if [[ ! -L $(_abs "$1") ]]; then
         fail "Expected symlink $1 to exist but it was not found."
     fi
 }
@@ -114,7 +125,7 @@ function assertLinkExists() {
 function assertLinkPointsTo() {
     assertLinkExists "$1"
 
-    target="$(readlink "$TESTED/$1")"
+    target="$(readlink "$(_abs "$1")")"
 
     # A symlink may point to a non-existing file so there is no need
     # to check if the path exists.
@@ -129,7 +140,7 @@ function assertLinkPointsTo() {
 #     assertDirectoryExists foo/bar
 #
 function assertDirectoryExists() {
-    if [[ ! -d "$TESTED/$1" ]]; then
+    if [[ ! -d $(_abs "$1") ]]; then
         fail "Expected directory $1 to exist but it was not found."
     fi
 }
@@ -143,7 +154,7 @@ function assertDirectoryEmpty() {
     assertDirectoryExists "$1"
 
     local content
-    content="$(find "$TESTED/$1" -mindepth 1 -maxdepth 1 -printf '%P\n')"
+    content="$(find "$(_abs "$1")" -mindepth 1 -maxdepth 1 -printf '%P\n')"
 
     if [[ $content ]]; then
         fail "Expected directory $1 to be empty but it contains
@@ -159,7 +170,7 @@ $content"
 function assertDirectoryNotEmpty() {
     assertDirectoryExists "$1"
 
-    if [[ ! $(find "$TESTED/$1" -mindepth 1 -maxdepth 1) ]]; then
+    if [[ ! $(find "$(_abs "$1")" -mindepth 1 -maxdepth 1) ]]; then
         fail "Expected directory $1 to be not empty but it was."
     fi
 }
