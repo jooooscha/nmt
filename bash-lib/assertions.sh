@@ -11,6 +11,28 @@ function _abs() {
     [[ $1 == /* ]] && echo "$1" || echo "$TESTED/$1"
 }
 
+# Normalizes Nix store paths of a given file. Specifically, this function
+# creates a copy of a given file but with all contained Nix store paths
+# normalized such that they begin with
+#
+#     /nix/store/00000000000000000000000000000000
+#
+# The path to the created file is echoed to standard output.
+#
+# Example:
+#     normalizeStorePaths foo/bar.txt
+#
+function normalizeStorePaths() {
+    local input output normalizedName
+    input="$(_abs "$1")"
+    normalizedName="${input##*/}"
+    mkdir -p "${out:?}/normalized"
+    output="${out:?}/normalized/$normalizedName"
+    sed -E "s!$NIX_STORE/[a-z0-9]{32}-!/nix/store/00000000000000000000000000000000-!g" \
+        < "$input" > "$output"
+    echo "$output"
+}
+
 # Always failing assertion with a message.
 #
 # Example:
