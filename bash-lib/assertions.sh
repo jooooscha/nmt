@@ -28,7 +28,7 @@ function normalizeStorePaths() {
     normalizedName="${input##*/}"
     mkdir -p "${out:?}/normalized"
     output="${out:?}/normalized/$normalizedName"
-    sed -E "s!$NIX_STORE/[a-z0-9]{32}-!/nix/store/00000000000000000000000000000000-!g" \
+    sed -E "s!$NIX_STORE"'/[a-z0-9]{32}((-[a-zA-Z][a-zA-Z0-9+._?=]*)*)(-[a-zA-Z0-9+._?=-]*)?!/nix/store/00000000000000000000000000000000\1!g' \
         < "$input" > "$output"
     echo "$output"
 }
