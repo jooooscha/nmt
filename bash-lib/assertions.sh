@@ -93,6 +93,12 @@ function assertFileContains() {
     fi
 }
 
+function assertDiff() {
+    if ! diff  --ignore-space-change --ignore-blank-lines "$1" "$2"; then
+        fail "File "$1" did not match given content."
+    fi
+}
+
 # Asserts that the content of a file matches a given regular
 # expression.
 #
