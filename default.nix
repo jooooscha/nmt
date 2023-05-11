@@ -80,7 +80,7 @@ let
         fi
       '');
 
-in rec {
+in {
   build = mapAttrs buildTest evaluatedTests // { all = buildAllTests; };
 
   run = mapAttrs runTest evaluatedTests // { all = runAllTests; };
