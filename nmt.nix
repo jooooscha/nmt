@@ -8,7 +8,14 @@ let
 
   testScript = let
     scriptPath =
-      makeBinPath (with pkgs; [ coreutils diffutils findutils gnugrep gnused ]);
+      makeBinPath (with pkgs; [
+        coreutils
+        diffutils
+        findutils
+        gnugrep
+        gnused
+        bash
+      ]);
   in ''
     set -uo pipefail
 
@@ -100,6 +107,7 @@ in {
 
         . $testScriptPath
       '';
+
 
       report = pkgs.runCommandLocal "nmt-report-${cfg.name}" {
         inherit testScript;
