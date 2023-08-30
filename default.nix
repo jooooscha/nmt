@@ -41,17 +41,21 @@ let
     '';
 
   reportResult = { name, result, onSuccess, onError }:
-    if result.success then ''
-      noteEcho "${name}: OK"
-      ${onSuccess}
-    '' else ''
-      errorEcho "${name}: FAILED"
-      cat "${result.report}/output"
-      echo "For further reference please introspect ${result.report}"
-      ${onError}
-    '';
+    if result.success then
+      ''
+        noteEcho "${name}: OK"
+        ${onSuccess}
+      ''
+    else
+      ''
+        errorEcho "${name}: FAILED"
+        cat "${result.report}/output"
+        echo "For further reference please introspect ${result.report}"
+        ${onError}
+      '';
 
-  buildTest = name: test: test.config.nmt.result.build;
+  buildTest = name: test:
+    test.config.nmt.result.build;
 
   buildAllTests = pkgs.linkFarm "nmt-all-tests" (mapAttrsToList (n: v: {
     name = n;
