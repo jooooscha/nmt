@@ -94,7 +94,7 @@ function assertFileContains() {
 }
 
 function assertDiff() {
-    if ! diff  --ignore-space-change --ignore-blank-lines "$1" "$2"; then
+    if ! diff  --unified --color=always --ignore-space-change --ignore-blank-lines "$1" "$2"; then
         fail "File "$1" did not match given content."
     fi
 }
