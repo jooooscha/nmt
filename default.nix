@@ -5,6 +5,7 @@ with lib;
 let
 
   evalTest = name: test:
+    lib.trace "Evaluating ${name}"
     evalModules {
       modules = let
         initModule = { config, ... }: {
@@ -14,7 +15,14 @@ let
       in [ initModule ./nmt.nix test ] ++ modules;
     };
 
-  evaluatedTests = mapAttrs evalTest tests;
+  evaluatedTests =
+    let
+      inherit (lib)
+        trace
+        length;
+
+      count = length (attrNames tests);
+    in trace "Total: ${toString count} tests" mapAttrs evalTest tests;
 
   scriptPath = makeBinPath (with pkgs; [
     coreutils
